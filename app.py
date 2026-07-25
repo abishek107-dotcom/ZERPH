@@ -146,14 +146,18 @@ def create_event():
         qr.make(fit=True)
         img_qr = qr.make_image(fill_color="#000000", back_color="#ffffff")
         
-        # Save to /tmp and upload to Cloudinary
-        tmp_path = os.path.join(config.TEMP_FOLDER, f"qr_{event_id}.png")
-        img_qr.save(tmp_path)
+        # Save to memory instead of /tmp to avoid filesystem issues
+        img_byte_arr = io.BytesIO()
+        img_qr.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)
         
         qr_url = ""
         if config.CLOUDINARY_CLOUD_NAME:
-            upload_result = cloudinary.uploader.upload(tmp_path, folder="smart_event/qrcodes")
-            qr_url = upload_result.get('secure_url', '')
+            try:
+                upload_result = cloudinary.uploader.upload(img_byte_arr, folder="smart_event/qrcodes")
+                qr_url = upload_result.get('secure_url', '')
+            except Exception as e:
+                print(f"Cloudinary QR Upload Error: {e}")
         
         # Create Face++ FaceSet
         face_engine.create_faceset(event_id)
@@ -263,13 +267,6 @@ def search_photos():
     if not event:
         return jsonify({'error': 'Event not found.'}), 404
         
-    # Save selfie to /tmp
-    temp_id = str(uuid.uuid4())[:10]
-    ext = file.filename.rsplit('.', 1)[1].lower()
-    temp_filename = f"selfie_{temp_id}.{ext}"
-    temp_filepath = os.path.join(config.TEMP_FOLDER, temp_filename)
-    file.save(temp_filepath)
-    
     try:
         stored_faces = get_faces_by_event(event_id)
         if not stored_faces:
@@ -279,7 +276,9 @@ def search_photos():
                 'message': 'No photographs have been uploaded for this event yet.'
             })
             
-        result = face_engine.match_selfie_against_event(temp_filepath, event_id, stored_faces=stored_faces)
+        # Pass the file directly to face_engine in memory
+        file.seek(0)
+        result = face_engine.match_selfie_against_event(file, event_id, stored_faces=stored_faces)
         
         if 'error' in result:
              return jsonify({'error': result['error']}), 500
@@ -297,12 +296,8 @@ def search_photos():
             'processing_time_ms': processing_time_ms,
             'threshold_used': config.FACEPP_CONFIDENCE_THRESHOLD
         })
-    finally:
-        if os.path.exists(temp_filepath):
-            try:
-                os.remove(temp_filepath)
-            except Exception:
-                pass
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/download_zip', methods=['POST'])
 def download_zip():
