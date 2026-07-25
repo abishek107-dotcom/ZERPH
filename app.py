@@ -186,36 +186,40 @@ def upload_photos(event_id):
             if file and allowed_file(file.filename):
                 image_id = str(uuid.uuid4())[:12]
                 
-                # Cloudinary Upload
-                if config.CLOUDINARY_CLOUD_NAME:
-                    upload_res = cloudinary.uploader.upload(file, folder=f"smart_event/events/{event_id}")
-                    image_url = upload_res.get('secure_url')
-                else:
-                    # Fallback for local testing if Cloudinary is not set
-                    image_url = "placeholder_url"
-                
-                add_image(image_id, event_id, image_url, secure_filename(file.filename))
-                uploaded_count += 1
-                
-                # Run AI Face Engine Detection
-                detected_faces = face_engine.detect_faces(image_url)
-                for face_data in detected_faces:
-                    face_id = str(uuid.uuid4())[:12]
-                    face_token = face_data['face_token']
+                try:
+                    # Cloudinary Upload
+                    if config.CLOUDINARY_CLOUD_NAME:
+                        file.seek(0)
+                        upload_res = cloudinary.uploader.upload(file, folder=f"smart_event/events/{event_id}")
+                        image_url = upload_res.get('secure_url')
+                    else:
+                        image_url = "placeholder_url"
                     
-                    add_face(
-                        face_id=face_id,
-                        image_id=image_id,
-                        event_id=event_id,
-                        embedding_vector=[], # Face++ handles embedding via token
-                        face_token=face_token,
-                        bounding_box=face_data['bbox'],
-                        confidence=face_data['confidence']
-                    )
+                    add_image(image_id, event_id, image_url, secure_filename(file.filename))
+                    uploaded_count += 1
                     
-                    # Add token to event FaceSet
-                    face_engine.add_face_to_faceset(event_id, face_token)
-                    total_faces_detected += 1
+                    # Run AI Face Engine Detection
+                    detected_faces = face_engine.detect_faces(image_url)
+                    for face_data in detected_faces:
+                        face_id = str(uuid.uuid4())[:12]
+                        face_token = face_data['face_token']
+                        
+                        add_face(
+                            face_id=face_id,
+                            image_id=image_id,
+                            event_id=event_id,
+                            embedding_vector=[], # Face++ handles embedding via token
+                            face_token=face_token,
+                            bounding_box=face_data['bbox'],
+                            confidence=face_data['confidence']
+                        )
+                        
+                        # Add token to event FaceSet
+                        face_engine.add_face_to_faceset(event_id, face_token)
+                        total_faces_detected += 1
+                except Exception as e:
+                    print(f"Error processing upload: {e}")
+                    return jsonify({'error': f"Failed to process {file.filename}: {str(e)}"}), 500
                     
         return jsonify({
             'success': True,
