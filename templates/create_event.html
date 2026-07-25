@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Create Event | AI Event Photo Retrieval{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="max-width: 650px; margin: 0 auto;">
+    <h2 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-calendar-plus" style="color: var(--primary-accent);"></i> Create New <span class="gradient-text">Event</span></h2>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">Fill out event details to generate an instant QR Code and Participant Portal.</p>
+
+    {% if error %}
+    <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger-glow); color: #fca5a5; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+        <i class="fa-solid fa-triangle-exclamation"></i> {{ error }}
+    </div>
+    {% endif %}
+
+    <form action="{{ url_for('create_event') }}" method="POST">
+        <div class="form-group">
+            <label class="form-label" for="event_name"><i class="fa-solid fa-heading"></i> Event Name *</label>
+            <input type="text" id="event_name" name="event_name" class="form-control" placeholder="e.g. Annual Tech Symposium 2026" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label class="form-label" for="date"><i class="fa-solid fa-calendar-day"></i> Date *</label>
+                <input type="date" id="date" name="date" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="venue"><i class="fa-solid fa-location-dot"></i> Venue *</label>
+                <input type="text" id="venue" name="venue" class="form-control" placeholder="e.g. Main Auditorium" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="description"><i class="fa-solid fa-align-left"></i> Description</label>
+            <textarea id="description" name="description" class="form-control" rows="3" placeholder="Brief event description..."></textarea>
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-qrcode"></i> Create & Generate QR</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | AI Event Photo Retrieval{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2>Admin <span class="gradient-text">Dashboard</span></h2>
+            <p style="color: var(--text-muted);">Overview of system metrics, active events, and face recognition processing status.</p>
+        </div>
+        <a href="{{ url_for('create_event') }}" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Create New Event
+        </a>
+    </div>
+</div>
+
+<!-- Key Performance Indicators / Statistics Grid (5 Metrics including Storage Utilization) -->
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fa-solid fa-calendar-check"></i>
+        </div>
+        <div>
+            <div class="stat-val">{{ stats.total_events }}</div>
+            <div class="stat-lbl">Total Events</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fa-solid fa-images"></i>
+        </div>
+        <div>
+            <div class="stat-val">{{ stats.total_photos }}</div>
+            <div class="stat-lbl">Uploaded Photos</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fa-solid fa-user-tag"></i>
+        </div>
+        <div>
+            <div class="stat-val">{{ stats.total_faces }}</div>
+            <div class="stat-lbl">Detected Faces</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fa-solid fa-magnifying-glass-chart"></i>
+        </div>
+        <div>
+            <div class="stat-val">{{ stats.total_searches }}</div>
+            <div class="stat-lbl">Selfie Searches</div>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fa-solid fa-database"></i>
+        </div>
+        <div>
+            <div class="stat-val">{{ stats.storage_mb }} <span style="font-size: 0.85rem; color: var(--text-muted);">MB</span></div>
+            <div class="stat-lbl">Storage Used</div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Events List -->
+<div class="glass-panel" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3><i class="fa-solid fa-layer-group" style="color: var(--primary-accent);"></i> Active Events</h3>
+        <span style="font-size: 0.85rem; color: var(--text-muted);">Showing {{ events|length }} event(s)</span>
+    </div>
+    
+    {% if events %}
+    <div style="overflow-x: auto;">
+        <table class="events-table">
+            <thead>
+                <tr>
+                    <th>Event Details</th>
+                    <th>Date & Venue</th>
+                    <th>AI Index Metrics</th>
+                    <th>Admin QR Code</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 600; font-size: 1.05rem;">{{ event.event_name }}</div>
+                        {% if event.description %}
+                        <div style="font-size: 0.8rem; color: var(--text-muted); max-width: 250px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                            {{ event.description }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="font-weight: 500;"><i class="fa-solid fa-calendar-day" style="font-size: 0.8rem; color: var(--text-muted);"></i> {{ event.date }}</div>
+                        <div style="font-size: 0.825rem; color: var(--text-muted);"><i class="fa-solid fa-location-dot" style="font-size: 0.8rem;"></i> {{ event.venue }}</div>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <span style="background: rgba(255, 255, 255, 0.06); padding: 4px 10px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); font-size: 0.8rem;">
+                                <i class="fa-solid fa-image"></i> {{ event.photo_count }} Photos
+                            </span>
+                            <span style="background: rgba(255, 255, 255, 0.06); padding: 4px 10px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); font-size: 0.8rem;">
+                                <i class="fa-solid fa-face-smile"></i> {{ event.face_count }} Faces
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <button onclick="showQrModal('{{ url_for('static', filename=event.qr_code_path) }}', '{{ event.event_name|e }}', '/event/{{ event.event_id }}')" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.825rem;">
+                            <i class="fa-solid fa-qrcode"></i> View Admin QR
+                        </button>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.4rem; align-items: center;">
+                            <a href="{{ url_for('upload_photos', event_id=event.event_id) }}" class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.825rem;" title="Upload Event Photos">
+                                <i class="fa-solid fa-upload"></i> Upload
+                            </a>
+                            <a href="/event/{{ event.event_id }}" target="_blank" class="btn btn-cyan" style="padding: 0.4rem 0.75rem; font-size: 0.825rem;" title="Open Participant Search Portal">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Portal
+                            </a>
+                            <button onclick="confirmDeleteEvent('{{ event.event_id }}', '{{ event.event_name|e }}')" class="btn btn-secondary" style="padding: 0.4rem 0.6rem; font-size: 0.825rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Delete Event">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 3.5rem 1rem; color: var(--text-muted);">
+        <i class="fa-solid fa-folder-open" style="font-size: 3rem; margin-bottom: 1rem; color: var(--text-subtle);"></i>
+        <h4>No events created yet</h4>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem;">Click "Create New Event" above to create an event and generate access QR codes.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Admin QR Modal -->
+<div id="qrModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="glass-panel" style="max-width: 400px; width: 90%; text-align: center; border: 1px solid var(--glass-border-light);">
+        <h3 id="modalEventName" style="margin-bottom: 0.5rem;">Event Access QR Code</h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem;" id="modalEventUrl"></p>
+        
+        <div style="background: white; padding: 1.25rem; border-radius: var(--radius-md); display: inline-block; margin-bottom: 1.5rem;">
+            <img id="modalQrImg" src="" alt="Admin QR Code" style="width: 200px; height: 200px; display: block;">
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+            <button onclick="closeQrModal()" class="btn btn-secondary">Close</button>
+            <a id="modalDownloadBtn" href="" download="Event_QR.png" class="btn btn-primary"><i class="fa-solid fa-download"></i> Download QR</a>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Search Queries Activity Log Section -->
+{% if stats.recent_searches %}
+<div class="glass-panel">
+    <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary-accent);"></i> Recent Search Logs</h3>
+    <div style="overflow-x: auto;">
+        <table class="events-table">
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>Timestamp</th>
+                    <th>Matches Retrieved</th>
+                    <th>AI Processing Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in stats.recent_searches %}
+                <tr>
+                    <td style="font-weight: 500;">{{ log.event_name }}</td>
+                    <td style="color: var(--text-muted); font-size: 0.85rem;">{{ log.timestamp }}</td>
+                    <td>
+                        <span style="background: rgba(255, 255, 255, 0.08); padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85rem;">
+                            {{ log.matched_images_count }} photos matched
+                        </span>
+                    </td>
+                    <td style="color: var(--text-muted); font-family: monospace; font-size: 0.85rem;">
+                        {{ log.processing_time_ms }} ms
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% block scripts %}
+<script>
+function showQrModal(qrPath, eventName, eventUrl) {
+    document.getElementById('modalEventName').textContent = eventName;
+    document.getElementById('modalEventUrl').textContent = window.location.origin + eventUrl;
+    document.getElementById('modalQrImg').src = qrPath;
+    document.getElementById('modalDownloadBtn').href = qrPath;
+    document.getElementById('modalDownloadBtn').download = `QR_${eventName.replace(/\s+/g, '_')}.png`;
+    document.getElementById('qrModal').style.display = 'flex';
+}
+
+function closeQrModal() {
+    document.getElementById('qrModal').style.display = 'none';
+}
+
+function confirmDeleteEvent(eventId, eventName) {
+    if (confirm(`Are you sure you want to delete the event "${eventName}"?\n\nThis will delete all uploaded photographs, detected face embeddings, and QR codes.`)) {
+        fetch(`/admin/events/${eventId}/delete`, {
+            method: 'POST'
+        }).then(res => {
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert('Failed to delete event.');
+            }
+        }).catch(err => alert('Error deleting event: ' + err.message));
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}

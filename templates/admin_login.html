@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login | AI Event Photo Retrieval{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="max-width: 480px; margin: 3rem auto;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <div class="brand-icon" style="width: 56px; height: 56px; margin: 0 auto 1rem auto; font-size: 1.8rem;">
+            <i class="fa-solid fa-lock"></i>
+        </div>
+        <h2>Admin <span class="gradient-text">Authentication</span></h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Log in to access event management, QR code generation, and system analytics.</p>
+    </div>
+
+    {% if error %}
+    <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 0.9rem 1rem; border-radius: var(--radius-md); font-size: 0.9rem; margin-bottom: 1.5rem; text-align: center;">
+        <i class="fa-solid fa-triangle-exclamation"></i> {{ error }}
+    </div>
+    {% endif %}
+
+    <form action="{{ url_for('admin_login') }}" method="POST">
+        <div class="form-group">
+            <label class="form-label" for="username"><i class="fa-solid fa-user"></i> Admin Username</label>
+            <input type="text" id="username" name="username" class="form-control" placeholder="Enter admin username" required autofocus>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label class="form-label" for="password"><i class="fa-solid fa-key"></i> Password</label>
+            <input type="password" id="password" name="password" class="form-control" placeholder="Enter admin password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.9rem; font-size: 1rem;">
+            <i class="fa-solid fa-right-to-bracket"></i> Log In to Admin Panel
+        </button>
+    </form>
+</div>
+{% endblock %}

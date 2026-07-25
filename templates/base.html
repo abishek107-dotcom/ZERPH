@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Smart Event Photo Retrieval{% endblock %}</title>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar">
+        <a href="{{ url_for('user_scan_portal') }}" class="nav-brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-camera-retro"></i>
+            </div>
+            <span class="brand-text">Smart<span class="gradient-text">PhotoAI</span></span>
+        </a>
+        <div class="nav-links">
+            <!-- User Scan Portal Link -->
+            <a href="{{ url_for('user_scan_portal') }}" class="nav-link"><i class="fa-solid fa-expand"></i> User Scan Portal</a>
+
+            <!-- Admin Authentication & Management Links -->
+            {% if session.get('logged_in') %}
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Admin Dashboard</a>
+                <a href="{{ url_for('create_event') }}" class="nav-link"><i class="fa-solid fa-calendar-plus"></i> New Event</a>
+                <a href="{{ url_for('admin_logout') }}" class="nav-link" style="color: #fca5a5;"><i class="fa-solid fa-right-from-bracket"></i> Logout (_abishekvox)</a>
+            {% else %}
+                <a href="{{ url_for('admin_login') }}" class="nav-link"><i class="fa-solid fa-shield-halved"></i> Admin Login</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 AI-Based Smart Event Photo Retrieval System | Major Engineering Major Project</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

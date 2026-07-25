@@ -1,0 +1,52 @@
+{% extends "base_user.html" %}
+
+{% block title %}User Scan Portal | AI Event Photo Retrieval{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="text-align: center; max-width: 800px; margin: 0 auto 2rem auto;">
+    <span style="background: rgba(255,255,255,0.08); color:#ffffff; padding: 6px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border: 1px solid var(--glass-border);">
+        <i class="fa-solid fa-camera"></i> User Scan Portal
+    </span>
+    <h1 style="margin: 1.2rem 0 0.5rem 0; font-size: 2.4rem;">Select Event & <span class="gradient-text">Scan Face</span></h1>
+    <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto 1.5rem auto;">
+        Choose your event below to open the real-time AI Face Security Scanner and retrieve your photographs instantly.
+    </p>
+</div>
+
+<div class="glass-panel" style="max-width: 900px; margin: 0 auto;">
+    <h3 style="margin-bottom: 1.5rem;">
+        <i class="fa-solid fa-calendar-days" style="color: var(--primary-accent);"></i> Available Events
+    </h3>
+
+    {% if events %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem;">
+        {% for event in events %}
+        <div class="stat-card" style="flex-direction: column; align-items: flex-start; gap: 1rem;">
+            <div>
+                <div style="font-weight: 700; font-size: 1.2rem;">{{ event.event_name }}</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
+                    <i class="fa-solid fa-location-dot"></i> {{ event.venue }}
+                    &bull;
+                    <i class="fa-solid fa-calendar"></i> {{ event.date }}
+                </div>
+            </div>
+            {% if event.description %}
+            <p style="font-size: 0.8rem; color: var(--text-subtle); line-height: 1.4;">{{ event.description }}</p>
+            {% endif %}
+            <div style="width: 100%; margin-top: auto; padding-top: 0.5rem; border-top: 1px solid var(--glass-border);">
+                <a href="/event/{{ event.event_id }}" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 0.9rem;">
+                    <i class="fa-solid fa-camera"></i> Open Face Scanner
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+        <i class="fa-solid fa-folder-open" style="font-size: 3rem; margin-bottom: 1rem; color: var(--text-subtle);"></i>
+        <h4>No Active Events Found</h4>
+        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Please scan an event QR code provided by the event administrator.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

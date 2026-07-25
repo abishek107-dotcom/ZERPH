@@ -1,0 +1,116 @@
+{% extends "base_user.html" %}
+
+{% block title %}{{ event.event_name }} — Scan Your Face | AI Photo Retrieval{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="text-align: center; max-width: 800px; margin: 0 auto 2rem auto;">
+    <span style="background: rgba(255,255,255,0.08); color:#ffffff; padding: 6px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border: 1px solid var(--glass-border);">
+        <i class="fa-solid fa-shield-halved"></i> Secure AI Face Scan Portal
+    </span>
+    <h1 style="margin: 1.2rem 0 0.5rem 0; font-size: 2.4rem;">Scan Face to <span class="gradient-text">Find Photos</span></h1>
+    <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto 1.5rem auto;">
+        Welcome to <strong>{{ event.event_name }}</strong>! Scan your face live using your device camera to instantly retrieve your event photographs.
+    </p>
+    <div style="font-size: 0.9rem; color: var(--text-subtle);">
+        <i class="fa-solid fa-location-dot"></i> {{ event.venue }}
+        &bull;
+        <i class="fa-solid fa-calendar-day"></i> {{ event.date }}
+    </div>
+</div>
+
+<!-- HTTPS / Secure Context Warning -->
+<div id="httpsWarning" style="display:none; max-width:700px; margin: 0 auto 1.5rem auto; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.5); border-radius: var(--radius-md); padding: 1.25rem 1.5rem;">
+    <p style="font-weight:600; margin-bottom:0.4rem;"><i class="fa-solid fa-triangle-exclamation" style="color:#fca5a5;"></i> Camera Not Available on This Connection</p>
+    <p style="font-size:0.875rem; color:var(--text-muted);">Your browser blocks camera access on plain <strong>HTTP</strong> LAN connections for security reasons. To use the live scanner, please open this page via:</p>
+    <ul style="font-size:0.875rem; color:var(--text-muted); margin: 0.5rem 0 0 1.2rem;">
+        <li><strong>http://localhost:5000/event/{{ event.event_id }}</strong> — on the same machine as the server</li>
+        <li><strong>HTTPS</strong> — if the server is configured with an SSL certificate</li>
+        <li>Or ask your admin to enable <em>Insecure Localhost</em> in Chrome flags (<code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code>) and add the server IP</li>
+    </ul>
+</div>
+
+<!-- Live Face Scanner Container -->
+<div class="glass-panel" style="max-width: 700px; margin: 0 auto;" id="scannerPanel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3><i class="fa-solid fa-expand" style="color: var(--primary-accent);"></i> Live Face Scanner</h3>
+        <span style="font-size: 0.8rem; background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
+            <i class="fa-solid fa-lock"></i> Camera Scan Only
+        </span>
+    </div>
+
+    <form id="searchForm">
+        <input type="hidden" id="event_id" value="{{ event.event_id }}">
+
+        <!-- Camera Box -->
+        <div id="cameraScannerBox" style="text-align:center; background: rgba(0,0,0,0.6); padding: 2rem 1rem; border-radius: var(--radius-lg); border: 1px dashed var(--glass-border-light); position:relative;">
+
+            <!-- Live Video Feed -->
+            <div id="videoWrapper" style="display:none; position:relative; width:100%; max-width:450px; margin:0 auto;">
+                <video id="webcamVideo" autoplay playsinline muted
+                    style="width:100%; border-radius:var(--radius-md); border:2px solid #fff; box-shadow:0 0 30px rgba(255,255,255,0.15); transform:scaleX(-1);">
+                </video>
+                <canvas id="webcamCanvas" style="display:none;"></canvas>
+                <!-- Oval face guide overlay -->
+                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:200px; height:260px; border:2px dashed rgba(255,255,255,0.7); border-radius:50%; pointer-events:none;"></div>
+            </div>
+
+            <!-- Initial Prompt -->
+            <div id="startCameraPrompt" style="padding: 2rem 1rem;">
+                <i class="fa-solid fa-user-shield" style="font-size:3.5rem; color:#ffffff; margin-bottom:1rem;"></i>
+                <h4 style="margin-bottom:0.5rem;">Enable Camera Security Scan</h4>
+                <p style="color:var(--text-muted); font-size:0.9rem; max-width:420px; margin:0 auto 1.5rem auto;">
+                    Allow camera access to perform a real-time face scan. No images are stored — only a temporary feature vector is used for matching.
+                </p>
+                <button type="button" class="btn btn-primary" id="startWebcamBtn" style="padding:0.9rem 2rem; font-size:1rem;">
+                    <i class="fa-solid fa-camera"></i> Activate Face Scanner
+                </button>
+            </div>
+        </div>
+
+        <!-- Captured Preview -->
+        <div id="selfiePreviewArea" style="display:none; text-align:center; margin-top:1.5rem; background:rgba(255,255,255,0.03); padding:1.5rem; border-radius:var(--radius-md); border:1px solid var(--glass-border);">
+            <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">Scanned Face Frame:</div>
+            <img id="selfiePreviewImg" src="" alt="Scanned Face"
+                style="max-width:220px; max-height:220px; border-radius:var(--radius-md); border:2px solid #fff; object-fit:cover;">
+            <div style="margin-top:1rem;">
+                <button type="button" class="btn btn-secondary" id="rescanFaceBtn" style="font-size:0.85rem;">
+                    <i class="fa-solid fa-rotate-left"></i> Re-Scan Face
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden fixed threshold — not exposed to users -->
+        <input type="hidden" id="thresholdRange" value="0.62">
+
+        <!-- Buttons -->
+        <div style="margin-top:1.5rem; text-align:center; display:flex; gap:1rem; justify-content:center;">
+            <button type="button" id="captureWebcamBtn" class="btn btn-cyan"
+                style="display:none; padding:0.9rem 2rem; font-size:1rem;">
+                <i class="fa-solid fa-circle-dot"></i> Capture Face
+            </button>
+            <button type="submit" id="searchBtn" class="btn btn-primary"
+                style="display:none; padding:0.9rem 2rem; font-size:1rem;">
+                <i class="fa-solid fa-magnifying-glass"></i> Search My Photos
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Results Gallery -->
+<div class="glass-panel" id="resultsSection" style="display:none; margin-top:2rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+        <div>
+            <h3><i class="fa-solid fa-images" style="color:#ffffff;"></i> Matched <span class="gradient-text">Photographs</span></h3>
+            <p style="color:var(--text-muted); font-size:0.9rem;" id="resultsMeta">Found 0 matching photos in 0ms</p>
+        </div>
+        <button id="downloadZipBtn" class="btn btn-cyan">
+            <i class="fa-solid fa-file-zipper"></i> Download All as ZIP
+        </button>
+    </div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/participant.js') }}"></script>
+{% endblock %}

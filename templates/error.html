@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Error | AI Event Photo Retrieval{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="max-width: 600px; margin: 3rem auto; text-align: center;">
+    <i class="fa-solid fa-circle-exclamation" style="font-size: 3.5rem; color: var(--danger-glow); margin-bottom: 1rem;"></i>
+    <h2>Something went <span class="gradient-text">wrong</span></h2>
+    <p style="color: var(--text-muted); margin: 1rem 0 2rem 0;">{{ message }}</p>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+        <i class="fa-solid fa-house"></i> Return to Dashboard
+    </a>
+</div>
+{% endblock %}
