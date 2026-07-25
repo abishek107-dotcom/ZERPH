@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (downloadZipBtn) downloadZipBtn.style.display = 'inline-flex';
 
         data.matches.forEach(item => {
-            const relPath = '/static/' + item.image_path;
+            const relPath = item.image_path;
             currentMatchedPaths.push(item.image_path);
 
             const card = document.createElement('div');
