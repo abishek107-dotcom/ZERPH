@@ -36,7 +36,8 @@ class FaceEngine:
                 files = {'image_file': f}
             else:
                 image_file_or_url.seek(0)
-                files = {'image_file': image_file_or_url}
+                filename = getattr(image_file_or_url, 'filename', 'image.jpg')
+                files = {'image_file': (filename, image_file_or_url.read())}
 
         try:
             response = requests.post(url, data=payload, files=files)
@@ -115,7 +116,8 @@ class FaceEngine:
                 files = {'image_file': f}
             else:
                 selfie_file.seek(0)
-                files = {'image_file': selfie_file}
+                filename = getattr(selfie_file, 'filename', 'image.jpg')
+                files = {'image_file': (filename, selfie_file.read())}
                 
         try:
             response = requests.post(url, data=payload, files=files)
