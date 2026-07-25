@@ -113,7 +113,7 @@
                         </div>
                     </td>
                     <td>
-                        <button onclick="showQrModal('{{ url_for('static', filename=event.qr_code_path) }}', '{{ event.event_name|e }}', '/event/{{ event.event_id }}')" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.825rem;">
+                        <button onclick="showQrModal('{{ event.qr_code_path }}', '{{ event.event_name|e }}', '/event/{{ event.event_id }}')" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.825rem;">
                             <i class="fa-solid fa-qrcode"></i> View Admin QR
                         </button>
                     </td>
